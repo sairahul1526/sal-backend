@@ -46,7 +46,9 @@ func ProfileAdd(w http.ResponseWriter, r *http.Request) {
 	counsellor := map[string]string{}
 	counsellor["first_name"] = body["first_name"]
 	counsellor["last_name"] = body["last_name"]
+	counsellor["gender"] = body["gender"]
 	counsellor["phone"] = body["phone"]
+	counsellor["photo"] = body["photo"]
 	counsellor["email"] = body["email"]
 	counsellor["price"] = body["price"]
 	counsellor["price_3"] = body["price_3"]
@@ -54,6 +56,10 @@ func ProfileAdd(w http.ResponseWriter, r *http.Request) {
 	counsellor["education"] = body["education"]
 	counsellor["experience"] = body["experience"]
 	counsellor["about"] = body["about"]
+	counsellor["resume"] = body["resume"]
+	counsellor["certificate"] = body["certificate"]
+	counsellor["aadhar"] = body["aadhar"]
+	counsellor["linkedin"] = body["linkedin"]
 	counsellor["status"] = CONSTANT.CounsellorNotApproved
 	counsellor["created_at"] = UTIL.GetCurrentTime().String()
 	counsellorID, status, ok := DB.InsertWithUniqueID(CONSTANT.CounsellorsTable, CONSTANT.CounsellorDigits, counsellor, "counsellor_id")
@@ -113,6 +119,9 @@ func ProfileUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(body["last_name"]) > 0 {
 		counsellor["last_name"] = body["last_name"]
+	}
+	if len(body["gender"]) > 0 {
+		counsellor["gender"] = body["gender"]
 	}
 	if len(body["price"]) > 0 {
 		counsellor["price"] = body["price"]

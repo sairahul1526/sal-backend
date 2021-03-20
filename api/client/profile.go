@@ -2,11 +2,45 @@ package client
 
 import (
 	"net/http"
+	CONFIG "salbackend/config"
 	CONSTANT "salbackend/constant"
 	DB "salbackend/database"
+	"strings"
 
 	UTIL "salbackend/util"
 )
+
+// ProfileGet godoc
+// @Tags Client Profile
+// @Summary Get client profile with email, if signed up already
+// @Router /client [get]
+// @Param email query string true "Email of client - to get details, if signed up already"
+// @Produce json
+// @Success 200
+func ProfileGet(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var response = make(map[string]interface{})
+
+	// get client details
+	client, status, ok := DB.SelectSQL(CONSTANT.ClientsTable, []string{"*"}, map[string]string{"email": r.FormValue("email")})
+	if !ok {
+		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
+		return
+	}
+	if len(client) > 0 {
+		// client already signed up
+		// check if client is active
+		if !strings.EqualFold(client[0]["status"], CONSTANT.ClientActive) {
+			UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.ClientAccountDeletedMessage, CONSTANT.ShowDialog, response)
+			return
+		}
+		response["client"] = client[0]
+		response["media_url"] = CONFIG.MediaURL
+	}
+
+	UTIL.SetReponse(w, CONSTANT.StatusCodeOk, "", CONSTANT.ShowDialog, response)
+}
 
 // ProfileAdd godoc
 // @Tags Client Profile
@@ -35,7 +69,7 @@ func ProfileAdd(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check if user already signed up with specified phone
-	if DB.CheckIfExists(CONSTANT.PhoneOTPVerifiedTable, map[string]string{"phone": body["phone"]}) {
+	if DB.CheckIfExists(CONSTANT.ClientsTable, map[string]string{"phone": body["phone"]}) {
 		UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.PhoneExistsMessage, CONSTANT.ShowDialog, response)
 		return
 	}
@@ -71,7 +105,26 @@ func ProfileAdd(w http.ResponseWriter, r *http.Request) {
 	// currently deleting if phone number is already present
 	DB.DeleteSQL(CONSTANT.PhoneOTPVerifiedTable, map[string]string{"phone": body["phone"]})
 
+	// generate access and refresh token
+	// access token - jwt token with short expiry added in header for authorization
+	// refresh token - jwt token with long expiry to get new access token if expired
+	// if refresh token expired, need to login
+	accessToken, ok := UTIL.CreateAccessToken(clientID)
+	if !ok {
+		UTIL.SetReponse(w, CONSTANT.StatusCodeServerError, "", CONSTANT.ShowDialog, response)
+		return
+	}
+	refreshToken, ok := UTIL.CreateRefreshToken(clientID)
+	if !ok {
+		UTIL.SetReponse(w, CONSTANT.StatusCodeServerError, "", CONSTANT.ShowDialog, response)
+		return
+	}
+
+	response["access_token"] = accessToken
+	response["refresh_token"] = refreshToken
+
 	response["client_id"] = clientID
+	response["media_url"] = CONFIG.MediaURL
 
 	UTIL.SetReponse(w, CONSTANT.StatusCodeOk, "", CONSTANT.ShowDialog, response)
 }

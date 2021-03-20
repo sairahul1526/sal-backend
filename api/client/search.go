@@ -2,8 +2,10 @@ package client
 
 import (
 	"net/http"
+	CONFIG "salbackend/config"
 	CONSTANT "salbackend/constant"
 	DB "salbackend/database"
+	"strconv"
 
 	UTIL "salbackend/util"
 	"strings"
@@ -19,6 +21,9 @@ import (
 // @Param date query string false "Available on date (2020-02-27)"
 // @Param time query string false "Available on time (0-23 slots), in IST, for the selected date"
 // @Param price query string false "Price range - 100,200 (min,max)"
+// @Param price_sort query string false "Sort price by - 1(asc), 2(desc)"
+// @Param rating_sort query string false "Sort rating by - 1(asc), 2(desc)"
+// @Param page query string false "Page number"
 // @Produce json
 // @Success 200
 func ListSearch(w http.ResponseWriter, r *http.Request) {
@@ -91,13 +96,22 @@ func ListSearch(w http.ResponseWriter, r *http.Request) {
 	SQLQuery += " order by average_rating desc " // default ordering by rating
 
 	// get counsellors|listeners
-	counsellors, status, ok := DB.SelectProcess(SQLQuery, args...)
+	counsellors, status, ok := DB.SelectProcess(SQLQuery+" limit "+strconv.Itoa(CONSTANT.CounsellorsListPerPageClient)+" offset "+strconv.Itoa((UTIL.GetPageNumber(r.FormValue("page"))-1)*CONSTANT.CounsellorsListPerPageClient), args...)
+	if !ok {
+		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
+		return
+	}
+
+	// get counsellors|listeners count
+	counsellorsCount, status, ok := DB.SelectProcess("select count(*) as ctn from ("+SQLQuery+") as a", args...)
 	if !ok {
 		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
 		return
 	}
 
 	response["counsellors"] = counsellors
-	response["media_url"] = CONSTANT.MediaURL
+	response["counsellors_count"] = counsellorsCount[0]["ctn"]
+	response["no_pages"] = strconv.Itoa(UTIL.GetNumberOfPages(counsellorsCount[0]["ctn"], CONSTANT.CounsellorsListPerPageClient))
+	response["media_url"] = CONFIG.MediaURL
 	UTIL.SetReponse(w, CONSTANT.StatusCodeOk, "", CONSTANT.ShowDialog, response)
 }

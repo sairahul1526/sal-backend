@@ -30,8 +30,8 @@ func LoadCounsellorRoutes(router *mux.Router) {
 	clientRoutes.HandleFunc("/event/paymentcomplete", EventOrderPaymentComplete).Methods("POST")
 
 	// profile
-	clientRoutes.HandleFunc("/", ProfileAdd).Methods("POST")
-	clientRoutes.HandleFunc("/", ProfileUpdate).Queries(
+	clientRoutes.HandleFunc("", ProfileAdd).Methods("POST")
+	clientRoutes.HandleFunc("", ProfileUpdate).Queries(
 		"counsellor_id", "{counsellor_id}",
 	).Methods("PUT")
 

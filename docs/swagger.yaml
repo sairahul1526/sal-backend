@@ -53,15 +53,11 @@ definitions:
     type: object
   model.ClientProfileUpdateRequest:
     properties:
-      email:
-        type: string
       first_name:
         type: string
       last_name:
         type: string
       location:
-        type: string
-      phone:
         type: string
     type: object
   model.CounsellorEventOrderCreateRequest:
@@ -118,7 +114,11 @@ definitions:
     type: object
   model.CounsellorProfileAddRequest:
     properties:
+      aadhar:
+        type: string
       about:
+        type: string
+      certificate:
         type: string
       education:
         type: string
@@ -128,11 +128,17 @@ definitions:
         type: string
       first_name:
         type: string
+      gender:
+        type: string
       language_ids:
         type: string
       last_name:
         type: string
+      linkedin:
+        type: string
       phone:
+        type: string
+      photo:
         type: string
       price:
         type: string
@@ -140,20 +146,18 @@ definitions:
         type: string
       price_5:
         type: string
+      resume:
+        type: string
       topic_ids:
         type: string
     type: object
   model.CounsellorProfileUpdateRequest:
     properties:
-      email:
-        type: string
       first_name:
         type: string
       last_name:
         type: string
       location:
-        type: string
-      phone:
         type: string
     type: object
   model.ListenerOrderCreateRequest:
@@ -176,34 +180,34 @@ definitions:
     properties:
       about:
         type: string
-      education:
-        type: string
       email:
         type: string
       experience:
         type: string
       first_name:
         type: string
+      gender:
+        type: string
       language_ids:
         type: string
       last_name:
         type: string
+      occupation:
+        type: string
       phone:
+        type: string
+      photo:
         type: string
       topic_ids:
         type: string
     type: object
   model.ListenerProfileUpdateRequest:
     properties:
-      email:
-        type: string
       first_name:
         type: string
       last_name:
         type: string
       location:
-        type: string
-      phone:
         type: string
     type: object
 host: hwmpf9h476.execute-api.ap-south-1.amazonaws.com
@@ -214,6 +218,21 @@ info:
   version: "1.0"
 paths:
   /client:
+    get:
+      parameters:
+      - description: Email of client - to get details, if signed up already
+        in: query
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+      summary: Get client profile with email, if signed up already
+      tags:
+      - Client Profile
     post:
       parameters:
       - description: Request Body
@@ -589,6 +608,18 @@ paths:
         in: query
         name: price
         type: string
+      - description: Sort price by - 1(asc), 2(desc)
+        in: query
+        name: price_sort
+        type: string
+      - description: Sort rating by - 1(asc), 2(desc)
+        in: query
+        name: rating_sort
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: string
       produces:
       - application/json
       responses:
@@ -915,6 +946,29 @@ paths:
         "200":
           description: ""
       summary: Get all available topics
+      tags:
+      - Miscellaneous
+  /upload:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: File to be uploaded
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: 1(counsellor)/2(listener)/3(client)
+        in: formData
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+      summary: Upload files like photos, certificates, aadhar etc
       tags:
       - Miscellaneous
 schemes:

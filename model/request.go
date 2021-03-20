@@ -91,7 +91,9 @@ type ClientProfileAddRequest struct {
 type CounsellorProfileAddRequest struct {
 	FirstName   string `json:"first_name"`
 	LastName    string `json:"last_name"`
+	Gender      string `json:"gender"`
 	Phone       string `json:"phone"`
+	Photo       string `json:"photo"`
 	Email       string `json:"email"`
 	Price       string `json:"price"`
 	Price3      string `json:"price_3"`
@@ -101,15 +103,21 @@ type CounsellorProfileAddRequest struct {
 	About       string `json:"about"`
 	TopicIDs    string `json:"topic_ids"`
 	LanguageIDs string `json:"language_ids"`
+	Resume      string `json:"resume"`
+	Certificate string `json:"certificate"`
+	Aadhar      string `json:"aadhar"`
+	Linkedin    string `json:"linkedin"`
 }
 
 // ListenerProfileAddRequest .
 type ListenerProfileAddRequest struct {
 	FirstName   string `json:"first_name"`
 	LastName    string `json:"last_name"`
+	Gender      string `json:"gender"`
 	Phone       string `json:"phone"`
+	Photo       string `json:"photo"`
 	Email       string `json:"email"`
-	Education   string `json:"education"`
+	Occupation  string `json:"occupation"`
 	Experience  string `json:"experience"`
 	About       string `json:"about"`
 	TopicIDs    string `json:"topic_ids"`
@@ -120,8 +128,6 @@ type ListenerProfileAddRequest struct {
 type ClientProfileUpdateRequest struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
-	Phone     string `json:"phone"`
-	Email     string `json:"email"`
 	Location  string `json:"location"`
 }
 
@@ -129,8 +135,6 @@ type ClientProfileUpdateRequest struct {
 type CounsellorProfileUpdateRequest struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
-	Phone     string `json:"phone"`
-	Email     string `json:"email"`
 	Location  string `json:"location"`
 }
 
@@ -138,7 +142,5 @@ type CounsellorProfileUpdateRequest struct {
 type ListenerProfileUpdateRequest struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
-	Phone     string `json:"phone"`
-	Email     string `json:"email"`
 	Location  string `json:"location"`
 }

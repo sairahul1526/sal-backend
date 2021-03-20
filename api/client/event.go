@@ -2,6 +2,7 @@ package client
 
 import (
 	"net/http"
+	CONFIG "salbackend/config"
 	CONSTANT "salbackend/constant"
 	DB "salbackend/database"
 
@@ -23,7 +24,6 @@ func EventsList(w http.ResponseWriter, r *http.Request) {
 
 	// get upcoming events
 	events, status, ok := DB.SelectProcess("select * from " + CONSTANT.EventsTable + " where date >= '" + UTIL.GetCurrentTime().String() + "' and status = " + CONSTANT.EventToBeStarted + " order by date asc, time asc")
-	DB.SelectSQL(CONSTANT.EventsTable, []string{"*"}, map[string]string{"event_": r.FormValue("client_id")})
 	if !ok {
 		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
 		return
@@ -56,7 +56,7 @@ func EventDetail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get event topics
-	topics, status, ok := DB.SelectProcess("select topic from "+CONSTANT.TopicsTable+" where id in (select topic_id from "+CONSTANT.CounsellorTopicsTable+" where counsellor_id = ?)", r.FormValue("event_id"))
+	topics, status, ok := DB.SelectProcess("select topic from "+CONSTANT.TopicsTable+" where id in (select topic_id from "+CONSTANT.CounsellorTopicsTable+" where counsellor_id = ?)", event[0]["event_id"])
 	if !ok {
 		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
 		return
@@ -76,7 +76,7 @@ func EventDetail(w http.ResponseWriter, r *http.Request) {
 	response["event"] = event[0]
 	response["counsellor"] = counsellor[0]
 	response["topics"] = topics
-	response["media_url"] = CONSTANT.MediaURL
+	response["media_url"] = CONFIG.MediaURL
 	UTIL.SetReponse(w, CONSTANT.StatusCodeOk, "", CONSTANT.ShowDialog, response)
 }
 

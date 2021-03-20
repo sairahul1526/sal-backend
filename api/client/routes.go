@@ -68,11 +68,16 @@ func LoadClientRoutes(router *mux.Router) {
 	clientRoutes.HandleFunc("/paymentcomplete", CounsellorOrderPaymentComplete).Methods("POST")
 
 	// profile
-	clientRoutes.HandleFunc("/", ProfileAdd).Methods("POST")
-	clientRoutes.HandleFunc("/", ProfileUpdate).Queries(
+	clientRoutes.HandleFunc("", ProfileGet).Queries(
+		"email", "{email}",
+	).Methods("GET")
+	clientRoutes.HandleFunc("", ProfileAdd).Methods("POST")
+	clientRoutes.HandleFunc("", ProfileUpdate).Queries(
 		"client_id", "{client_id}",
 	).Methods("PUT")
 
 	// search
 	clientRoutes.HandleFunc("/search", ListSearch).Methods("GET")
+
+	clientRoutes.HandleFunc("/testpayu", TestPAYU).Methods("POST")
 }

@@ -46,12 +46,11 @@ func ProfileAdd(w http.ResponseWriter, r *http.Request) {
 	listener := map[string]string{}
 	listener["first_name"] = body["first_name"]
 	listener["last_name"] = body["last_name"]
+	listener["gender"] = body["gender"]
 	listener["phone"] = body["phone"]
+	listener["photo"] = body["photo"]
 	listener["email"] = body["email"]
-	listener["price"] = body["price"]
-	listener["price_3"] = body["price_3"]
-	listener["price_5"] = body["price_5"]
-	listener["education"] = body["education"]
+	listener["occupation"] = body["occupation"]
 	listener["experience"] = body["experience"]
 	listener["about"] = body["about"]
 	listener["status"] = CONSTANT.ListenerNotApproved

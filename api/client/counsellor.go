@@ -1,7 +1,10 @@
 package client
 
 import (
+	"fmt"
+	"io/ioutil"
 	"net/http"
+	CONFIG "salbackend/config"
 	CONSTANT "salbackend/constant"
 	DB "salbackend/database"
 
@@ -58,7 +61,7 @@ func CounsellorProfile(w http.ResponseWriter, r *http.Request) {
 	response["languages"] = languages
 	response["topics"] = topics
 	response["reviews"] = reviews
-	response["media_url"] = CONSTANT.MediaURL
+	response["media_url"] = CONFIG.MediaURL
 	UTIL.SetReponse(w, CONSTANT.StatusCodeOk, "", CONSTANT.ShowDialog, response)
 }
 
@@ -112,7 +115,7 @@ func CounsellorOrderCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get client details
-	client, status, ok := DB.SelectSQL(CONSTANT.ClientsTable, []string{"status"}, map[string]string{"client_id": body["client_id"]})
+	client, status, ok := DB.SelectSQL(CONSTANT.ClientsTable, []string{"first_name", "last_name", "email", "phone", "status"}, map[string]string{"client_id": body["client_id"]})
 	if !ok {
 		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
 		return
@@ -129,7 +132,7 @@ func CounsellorOrderCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get counsellor details
-	counsellor, status, ok := DB.SelectSQL(CONSTANT.CounsellorsTable, []string{"price", "price_3", "price_5", "status"}, map[string]string{"counsellor_id": body["counsellor_id"]})
+	counsellor, status, ok := DB.SelectSQL(CONSTANT.CounsellorsTable, []string{"first_name", "price", "price_3", "price_5", "status"}, map[string]string{"counsellor_id": body["counsellor_id"]})
 	if !ok {
 		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
 		return
@@ -180,7 +183,7 @@ func CounsellorOrderCreate(w http.ResponseWriter, r *http.Request) {
 
 	if len(body["coupon_code"]) > 0 {
 		// get coupon details
-		coupon, status, ok := DB.SelectProcess("select * from "+CONSTANT.CouponsTable+" where coupon_code = ? and status = 1 and start_by > '"+UTIL.GetCurrentTime().String()+"' and end_by < '"+UTIL.GetCurrentTime().String()+"' and order_type = "+CONSTANT.OrderAppointmentType+" and (client_id = ? or client_id is null) and (counsellor_id = ? or counsellor_id is null) order by created_at desc limit 1", body["coupon_code"], body["client_id"], body["counsellor_id"])
+		coupon, status, ok := DB.SelectProcess("select * from "+CONSTANT.CouponsTable+" where coupon_code = ? and status = 1 and start_by < '"+UTIL.GetCurrentTime().String()+"' and end_by > '"+UTIL.GetCurrentTime().String()+"' and order_type = "+CONSTANT.OrderAppointmentType+" and (client_id = ? or client_id is null) and (counsellor_id = ? or counsellor_id is null) order by created_at desc limit 1", body["coupon_code"], body["client_id"], body["counsellor_id"])
 		if !ok {
 			UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
 			return
@@ -235,6 +238,8 @@ func CounsellorOrderCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	paidAmount, _ := strconv.ParseFloat(billing["paid_amount"], 64)
+	response["payu_payment"] = UTIL.GetPayUPaymentObject(CONFIG.PAYUMerchatKey, CONFIG.PAYUSalt, orderID, "Appointment with "+counsellor[0]["first_name"], client[0]["first_name"], client[0]["last_name"], client[0]["email"], client[0]["phone"], "https://hwmpf9h476.execute-api.ap-south-1.amazonaws.com/prod/client/testpayu", "https://hwmpf9h476.execute-api.ap-south-1.amazonaws.com/prod/client/testpayu", paidAmount)
 	response["billing"] = billing
 	response["order_id"] = orderID
 	response["prices"] = counsellor[0]
@@ -374,4 +379,23 @@ func CounsellorOrderPaymentComplete(w http.ResponseWriter, r *http.Request) {
 
 	response["invoice_id"] = invoiceID
 	UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
+}
+
+// TestPAYU .
+func TestPAYU(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var response = make(map[string]interface{})
+
+	// read request body
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println("TestPAYU", err)
+		UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, "", CONSTANT.ShowDialog, response)
+		return
+	}
+	defer r.Body.Close()
+	fmt.Println("TestPAYU", string(b))
+
+	UTIL.SetReponse(w, CONSTANT.StatusCodeOk, "", CONSTANT.ShowDialog, response)
 }

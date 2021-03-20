@@ -23,8 +23,8 @@ func LoadListenerRoutes(router *mux.Router) {
 	).Methods("GET")
 
 	// profile
-	clientRoutes.HandleFunc("/", ProfileAdd).Methods("POST")
-	clientRoutes.HandleFunc("/", ProfileUpdate).Queries(
+	clientRoutes.HandleFunc("", ProfileAdd).Methods("POST")
+	clientRoutes.HandleFunc("", ProfileUpdate).Queries(
 		"listener_id", "{listener_id}",
 	).Methods("PUT")
 

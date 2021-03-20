@@ -2,6 +2,7 @@ package client
 
 import (
 	"net/http"
+	CONFIG "salbackend/config"
 	CONSTANT "salbackend/constant"
 	DB "salbackend/database"
 
@@ -57,7 +58,7 @@ func ListenerProfile(w http.ResponseWriter, r *http.Request) {
 	response["languages"] = languages
 	response["topics"] = topics
 	response["reviews"] = reviews
-	response["media_url"] = CONSTANT.MediaURL
+	response["media_url"] = CONFIG.MediaURL
 	UTIL.SetReponse(w, CONSTANT.StatusCodeOk, "", CONSTANT.ShowDialog, response)
 }
 

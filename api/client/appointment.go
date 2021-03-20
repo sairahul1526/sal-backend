@@ -2,6 +2,7 @@ package client
 
 import (
 	"net/http"
+	CONFIG "salbackend/config"
 	CONSTANT "salbackend/constant"
 	DB "salbackend/database"
 
@@ -41,7 +42,7 @@ func AppointmentsUpcoming(w http.ResponseWriter, r *http.Request) {
 
 	response["counsellors"] = UTIL.ConvertMapToKeyMap(counsellors, "id")
 	response["appointments"] = appointments
-	response["media_url"] = CONSTANT.MediaURL
+	response["media_url"] = CONFIG.MediaURL
 	UTIL.SetReponse(w, CONSTANT.StatusCodeOk, "", CONSTANT.ShowDialog, response)
 }
 
@@ -58,7 +59,7 @@ func AppointmentSlotsUnused(w http.ResponseWriter, r *http.Request) {
 	var response = make(map[string]interface{})
 
 	// get unused appointment slots
-	appointmentSlots, status, ok := DB.SelectProcess("select * from " + CONSTANT.AppointmentSlotsTable + " where client_id = ? and slots_remaining > 0 and status = " + CONSTANT.AppointmentSlotsActive)
+	appointmentSlots, status, ok := DB.SelectProcess("select * from "+CONSTANT.AppointmentSlotsTable+" where client_id = ? and slots_remaining > 0 and status = "+CONSTANT.AppointmentSlotsActive, r.FormValue("client_id"))
 	if !ok {
 		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
 		return
@@ -75,7 +76,7 @@ func AppointmentSlotsUnused(w http.ResponseWriter, r *http.Request) {
 
 	response["counsellors"] = UTIL.ConvertMapToKeyMap(counsellors, "id")
 	response["appointment_slots"] = appointmentSlots
-	response["media_url"] = CONSTANT.MediaURL
+	response["media_url"] = CONFIG.MediaURL
 	UTIL.SetReponse(w, CONSTANT.StatusCodeOk, "", CONSTANT.ShowDialog, response)
 }
 
@@ -109,7 +110,7 @@ func AppointmentsPast(w http.ResponseWriter, r *http.Request) {
 
 	response["counsellors"] = UTIL.ConvertMapToKeyMap(counsellors, "id")
 	response["appointments"] = appointments
-	response["media_url"] = CONSTANT.MediaURL
+	response["media_url"] = CONFIG.MediaURL
 	UTIL.SetReponse(w, CONSTANT.StatusCodeOk, "", CONSTANT.ShowDialog, response)
 }
 
@@ -145,7 +146,7 @@ func AppointmentDetail(w http.ResponseWriter, r *http.Request) {
 
 	response["appointment"] = appointment[0]
 	response["order"] = order[0]
-	response["media_url"] = CONSTANT.MediaURL
+	response["media_url"] = CONFIG.MediaURL
 	UTIL.SetReponse(w, CONSTANT.StatusCodeOk, "", CONSTANT.ShowDialog, response)
 }
 

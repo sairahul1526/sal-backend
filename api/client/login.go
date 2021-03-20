@@ -2,6 +2,7 @@ package client
 
 import (
 	"net/http"
+	CONFIG "salbackend/config"
 	CONSTANT "salbackend/constant"
 	DB "salbackend/database"
 
@@ -85,7 +86,26 @@ func VerifyOTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// generate access and refresh token
+		// access token - jwt token with short expiry added in header for authorization
+		// refresh token - jwt token with long expiry to get new access token if expired
+		// if refresh token expired, need to login
+		accessToken, ok := UTIL.CreateAccessToken(client[0]["client_id"])
+		if !ok {
+			UTIL.SetReponse(w, CONSTANT.StatusCodeServerError, "", CONSTANT.ShowDialog, response)
+			return
+		}
+		refreshToken, ok := UTIL.CreateRefreshToken(client[0]["client_id"])
+		if !ok {
+			UTIL.SetReponse(w, CONSTANT.StatusCodeServerError, "", CONSTANT.ShowDialog, response)
+			return
+		}
+
+		response["access_token"] = accessToken
+		response["refresh_token"] = refreshToken
+
 		response["client"] = client[0]
+		response["media_url"] = CONFIG.MediaURL
 	}
 
 	UTIL.SetReponse(w, CONSTANT.StatusCodeOk, "", CONSTANT.ShowDialog, response)

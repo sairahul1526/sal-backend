@@ -25,6 +25,29 @@ var doc = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/client": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Client Profile"
+                ],
+                "summary": "Get client profile with email, if signed up already",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Email of client - to get details, if signed up already",
+                        "name": "email",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }
+            },
             "put": {
                 "produces": [
                     "application/json"
@@ -613,6 +636,24 @@ var doc = `{
                         "description": "Price range - 100,200 (min,max)",
                         "name": "price",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort price by - 1(asc), 2(desc)",
+                        "name": "price_sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort rating by - 1(asc), 2(desc)",
+                        "name": "rating_sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1119,6 +1160,41 @@ var doc = `{
                     }
                 }
             }
+        },
+        "/upload": {
+            "post": {
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Miscellaneous"
+                ],
+                "summary": "Upload files like photos, certificates, aadhar etc",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "File to be uploaded",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "1(counsellor)/2(listener)/3(client)",
+                        "name": "type",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1204,9 +1280,6 @@ var doc = `{
         "model.ClientProfileUpdateRequest": {
             "type": "object",
             "properties": {
-                "email": {
-                    "type": "string"
-                },
                 "first_name": {
                     "type": "string"
                 },
@@ -1214,9 +1287,6 @@ var doc = `{
                     "type": "string"
                 },
                 "location": {
-                    "type": "string"
-                },
-                "phone": {
                     "type": "string"
                 }
             }
@@ -1304,7 +1374,13 @@ var doc = `{
         "model.CounsellorProfileAddRequest": {
             "type": "object",
             "properties": {
+                "aadhar": {
+                    "type": "string"
+                },
                 "about": {
+                    "type": "string"
+                },
+                "certificate": {
                     "type": "string"
                 },
                 "education": {
@@ -1319,13 +1395,22 @@ var doc = `{
                 "first_name": {
                     "type": "string"
                 },
+                "gender": {
+                    "type": "string"
+                },
                 "language_ids": {
                     "type": "string"
                 },
                 "last_name": {
                     "type": "string"
                 },
+                "linkedin": {
+                    "type": "string"
+                },
                 "phone": {
+                    "type": "string"
+                },
+                "photo": {
                     "type": "string"
                 },
                 "price": {
@@ -1337,6 +1422,9 @@ var doc = `{
                 "price_5": {
                     "type": "string"
                 },
+                "resume": {
+                    "type": "string"
+                },
                 "topic_ids": {
                     "type": "string"
                 }
@@ -1345,9 +1433,6 @@ var doc = `{
         "model.CounsellorProfileUpdateRequest": {
             "type": "object",
             "properties": {
-                "email": {
-                    "type": "string"
-                },
                 "first_name": {
                     "type": "string"
                 },
@@ -1355,9 +1440,6 @@ var doc = `{
                     "type": "string"
                 },
                 "location": {
-                    "type": "string"
-                },
-                "phone": {
                     "type": "string"
                 }
             }
@@ -1393,9 +1475,6 @@ var doc = `{
                 "about": {
                     "type": "string"
                 },
-                "education": {
-                    "type": "string"
-                },
                 "email": {
                     "type": "string"
                 },
@@ -1405,13 +1484,22 @@ var doc = `{
                 "first_name": {
                     "type": "string"
                 },
+                "gender": {
+                    "type": "string"
+                },
                 "language_ids": {
                     "type": "string"
                 },
                 "last_name": {
                     "type": "string"
                 },
+                "occupation": {
+                    "type": "string"
+                },
                 "phone": {
+                    "type": "string"
+                },
+                "photo": {
                     "type": "string"
                 },
                 "topic_ids": {
@@ -1422,9 +1510,6 @@ var doc = `{
         "model.ListenerProfileUpdateRequest": {
             "type": "object",
             "properties": {
-                "email": {
-                    "type": "string"
-                },
                 "first_name": {
                     "type": "string"
                 },
@@ -1432,9 +1517,6 @@ var doc = `{
                     "type": "string"
                 },
                 "location": {
-                    "type": "string"
-                },
-                "phone": {
                     "type": "string"
                 }
             }
