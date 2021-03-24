@@ -1,4 +1,4 @@
-package client
+package counsellor
 
 import (
 	"net/http"
@@ -11,9 +11,9 @@ import (
 )
 
 // SendOTP godoc
-// @Tags Client Login
+// @Tags Counsellor Login
 // @Summary Send OTP to specified phone
-// @Router /client/sendotp [get]
+// @Router /counsellor/sendotp [get]
 // @Param phone query string true "Phone number to send OTP - send phone number with 91 code"
 // @Produce json
 // @Success 200
@@ -27,14 +27,14 @@ func SendOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get client details
-	client, status, ok := DB.SelectSQL(CONSTANT.ClientsTable, []string{"status"}, map[string]string{"phone": r.FormValue("phone")})
+	// get counsellor details
+	counsellor, status, ok := DB.SelectSQL(CONSTANT.CounsellorsTable, []string{"status"}, map[string]string{"phone": r.FormValue("phone")})
 	if !ok {
 		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
 		return
 	}
-	if len(client) > 0 && !strings.EqualFold(client[0]["status"], CONSTANT.ClientActive) {
-		UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.ClientAccountDeletedMessage, CONSTANT.ShowDialog, response)
+	if len(counsellor) > 0 && !strings.EqualFold(counsellor[0]["status"], CONSTANT.CounsellorActive) {
+		UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.CounsellorAccountDeletedMessage, CONSTANT.ShowDialog, response)
 		return
 	}
 
@@ -48,11 +48,11 @@ func SendOTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // VerifyOTP godoc
-// @Tags Client Login
+// @Tags Counsellor Login
 // @Summary Verify OTP sent to specified phone
-// @Router /client/verifyotp [get]
+// @Router /counsellor/verifyotp [get]
 // @Param phone query string true "Phone number OTP has been sent to - send phone number with 91 code"
-// @Param otp query string true "OTP entered by client"
+// @Param otp query string true "OTP entered by counsellor"
 // @Produce json
 // @Success 200
 func VerifyOTP(w http.ResponseWriter, r *http.Request) {
@@ -66,23 +66,23 @@ func VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get client details
-	client, status, ok := DB.SelectSQL(CONSTANT.ClientsTable, []string{"*"}, map[string]string{"phone": r.FormValue("phone")})
+	// get counsellor details
+	counsellor, status, ok := DB.SelectSQL(CONSTANT.CounsellorsTable, []string{"*"}, map[string]string{"phone": r.FormValue("phone")})
 	if !ok {
 		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
 		return
 	}
-	if len(client) == 0 {
-		// client is first time signing up
+	if len(counsellor) == 0 {
+		// counsellor is first time signing up
 
 		// using phone verified table to check if phone has been really verified by OTP
 		// currently inserting after phone is really verified
 		DB.InsertSQL(CONSTANT.PhoneOTPVerifiedTable, map[string]string{"phone": r.FormValue("phone"), "created_at": UTIL.GetCurrentTime().String()})
 	} else {
-		// client already signed up
-		// check if client is active
-		if !strings.EqualFold(client[0]["status"], CONSTANT.ClientActive) {
-			UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.ClientAccountDeletedMessage, CONSTANT.ShowDialog, response)
+		// counsellor already signed up
+		// check if counsellor is active
+		if !strings.EqualFold(counsellor[0]["status"], CONSTANT.CounsellorActive) {
+			UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.CounsellorAccountDeletedMessage, CONSTANT.ShowDialog, response)
 			return
 		}
 
@@ -90,12 +90,12 @@ func VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		// access token - jwt token with short expiry added in header for authorization
 		// refresh token - jwt token with long expiry to get new access token if expired
 		// if refresh token expired, need to login
-		accessToken, ok := UTIL.CreateAccessToken(client[0]["client_id"])
+		accessToken, ok := UTIL.CreateAccessToken(counsellor[0]["counsellor_id"])
 		if !ok {
 			UTIL.SetReponse(w, CONSTANT.StatusCodeServerError, "", CONSTANT.ShowDialog, response)
 			return
 		}
-		refreshToken, ok := UTIL.CreateRefreshToken(client[0]["client_id"])
+		refreshToken, ok := UTIL.CreateRefreshToken(counsellor[0]["counsellor_id"])
 		if !ok {
 			UTIL.SetReponse(w, CONSTANT.StatusCodeServerError, "", CONSTANT.ShowDialog, response)
 			return
@@ -104,7 +104,7 @@ func VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		response["access_token"] = accessToken
 		response["refresh_token"] = refreshToken
 
-		response["client"] = client[0]
+		response["counsellor"] = counsellor[0]
 		response["media_url"] = CONFIG.MediaURL
 	}
 
@@ -112,11 +112,10 @@ func VerifyOTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // RefreshToken godoc
-// @Tags Client Login
+// @Tags Counsellor Login
 // @Summary Get new access token with refresh token
-// @Router /client/refresh-token [get]
-// @Param client_id query string true "Logged in client ID"
-// @Security JWTAuth
+// @Router /counsellor/refresh-token [get]
+// @Param counsellor_id query string true "Logged in counsellor ID"
 // @Produce json
 // @Success 200
 func RefreshToken(w http.ResponseWriter, r *http.Request) {
@@ -126,19 +125,19 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	// check if refresh token is valid, not expired and token user id is same as user id given
 	id, ok, access := UTIL.ParseJWTAccessToken(r.Header.Get("Authorization"))
-	if !ok || access || !strings.EqualFold(id, r.FormValue("client_id")) {
+	if !ok || access || !strings.EqualFold(id, r.FormValue("counsellor_id")) {
 		UTIL.SetReponse(w, CONSTANT.StatusCodeSessionExpired, CONSTANT.SessionExpiredMessage, CONSTANT.ShowDialog, response)
 		return
 	}
 
-	// check if client id is valid
-	if DB.CheckIfExists(CONSTANT.ClientsTable, map[string]string{"client_id": r.FormValue("client_id"), "status": CONSTANT.ClientActive}) {
-		UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.ClientNotExistMessage, CONSTANT.ShowDialog, response)
+	// check if counsellor id is valid
+	if DB.CheckIfExists(CONSTANT.CounsellorsTable, map[string]string{"counsellor_id": r.FormValue("counsellor_id"), "status": CONSTANT.CounsellorActive}) {
+		UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.CounsellorNotExistMessage, CONSTANT.ShowDialog, response)
 		return
 	}
 
 	// generate new access token
-	accessToken, ok := UTIL.CreateAccessToken(r.FormValue("client_id"))
+	accessToken, ok := UTIL.CreateAccessToken(r.FormValue("counsellor_id"))
 	if !ok {
 		UTIL.SetReponse(w, CONSTANT.StatusCodeSessionExpired, CONSTANT.SessionExpiredMessage, CONSTANT.ShowDialog, response)
 		return

@@ -1,4 +1,4 @@
-package client
+package listener
 
 import (
 	"net/http"
@@ -11,9 +11,9 @@ import (
 )
 
 // SendOTP godoc
-// @Tags Client Login
+// @Tags Listener Login
 // @Summary Send OTP to specified phone
-// @Router /client/sendotp [get]
+// @Router /listener/sendotp [get]
 // @Param phone query string true "Phone number to send OTP - send phone number with 91 code"
 // @Produce json
 // @Success 200
@@ -27,14 +27,14 @@ func SendOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get client details
-	client, status, ok := DB.SelectSQL(CONSTANT.ClientsTable, []string{"status"}, map[string]string{"phone": r.FormValue("phone")})
+	// get listener details
+	listener, status, ok := DB.SelectSQL(CONSTANT.ListenersTable, []string{"status"}, map[string]string{"phone": r.FormValue("phone")})
 	if !ok {
 		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
 		return
 	}
-	if len(client) > 0 && !strings.EqualFold(client[0]["status"], CONSTANT.ClientActive) {
-		UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.ClientAccountDeletedMessage, CONSTANT.ShowDialog, response)
+	if len(listener) > 0 && !strings.EqualFold(listener[0]["status"], CONSTANT.ListenerActive) {
+		UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.ListenerAccountDeletedMessage, CONSTANT.ShowDialog, response)
 		return
 	}
 
@@ -48,11 +48,11 @@ func SendOTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // VerifyOTP godoc
-// @Tags Client Login
+// @Tags Listener Login
 // @Summary Verify OTP sent to specified phone
-// @Router /client/verifyotp [get]
+// @Router /listener/verifyotp [get]
 // @Param phone query string true "Phone number OTP has been sent to - send phone number with 91 code"
-// @Param otp query string true "OTP entered by client"
+// @Param otp query string true "OTP entered by listener"
 // @Produce json
 // @Success 200
 func VerifyOTP(w http.ResponseWriter, r *http.Request) {
@@ -66,23 +66,23 @@ func VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get client details
-	client, status, ok := DB.SelectSQL(CONSTANT.ClientsTable, []string{"*"}, map[string]string{"phone": r.FormValue("phone")})
+	// get listener details
+	listener, status, ok := DB.SelectSQL(CONSTANT.ListenersTable, []string{"*"}, map[string]string{"phone": r.FormValue("phone")})
 	if !ok {
 		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
 		return
 	}
-	if len(client) == 0 {
-		// client is first time signing up
+	if len(listener) == 0 {
+		// listener is first time signing up
 
 		// using phone verified table to check if phone has been really verified by OTP
 		// currently inserting after phone is really verified
 		DB.InsertSQL(CONSTANT.PhoneOTPVerifiedTable, map[string]string{"phone": r.FormValue("phone"), "created_at": UTIL.GetCurrentTime().String()})
 	} else {
-		// client already signed up
-		// check if client is active
-		if !strings.EqualFold(client[0]["status"], CONSTANT.ClientActive) {
-			UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.ClientAccountDeletedMessage, CONSTANT.ShowDialog, response)
+		// listener already signed up
+		// check if listener is active
+		if !strings.EqualFold(listener[0]["status"], CONSTANT.ListenerActive) {
+			UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.ListenerAccountDeletedMessage, CONSTANT.ShowDialog, response)
 			return
 		}
 
@@ -90,12 +90,12 @@ func VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		// access token - jwt token with short expiry added in header for authorization
 		// refresh token - jwt token with long expiry to get new access token if expired
 		// if refresh token expired, need to login
-		accessToken, ok := UTIL.CreateAccessToken(client[0]["client_id"])
+		accessToken, ok := UTIL.CreateAccessToken(listener[0]["listener_id"])
 		if !ok {
 			UTIL.SetReponse(w, CONSTANT.StatusCodeServerError, "", CONSTANT.ShowDialog, response)
 			return
 		}
-		refreshToken, ok := UTIL.CreateRefreshToken(client[0]["client_id"])
+		refreshToken, ok := UTIL.CreateRefreshToken(listener[0]["listener_id"])
 		if !ok {
 			UTIL.SetReponse(w, CONSTANT.StatusCodeServerError, "", CONSTANT.ShowDialog, response)
 			return
@@ -104,7 +104,7 @@ func VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		response["access_token"] = accessToken
 		response["refresh_token"] = refreshToken
 
-		response["client"] = client[0]
+		response["listener"] = listener[0]
 		response["media_url"] = CONFIG.MediaURL
 	}
 
@@ -112,11 +112,10 @@ func VerifyOTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // RefreshToken godoc
-// @Tags Client Login
+// @Tags Listener Login
 // @Summary Get new access token with refresh token
-// @Router /client/refresh-token [get]
-// @Param client_id query string true "Logged in client ID"
-// @Security JWTAuth
+// @Router /listener/refresh-token [get]
+// @Param listener_id query string true "Logged in listener ID"
 // @Produce json
 // @Success 200
 func RefreshToken(w http.ResponseWriter, r *http.Request) {
@@ -126,19 +125,19 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	// check if refresh token is valid, not expired and token user id is same as user id given
 	id, ok, access := UTIL.ParseJWTAccessToken(r.Header.Get("Authorization"))
-	if !ok || access || !strings.EqualFold(id, r.FormValue("client_id")) {
+	if !ok || access || !strings.EqualFold(id, r.FormValue("listener_id")) {
 		UTIL.SetReponse(w, CONSTANT.StatusCodeSessionExpired, CONSTANT.SessionExpiredMessage, CONSTANT.ShowDialog, response)
 		return
 	}
 
-	// check if client id is valid
-	if DB.CheckIfExists(CONSTANT.ClientsTable, map[string]string{"client_id": r.FormValue("client_id"), "status": CONSTANT.ClientActive}) {
-		UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.ClientNotExistMessage, CONSTANT.ShowDialog, response)
+	// check if listener id is valid
+	if DB.CheckIfExists(CONSTANT.ListenersTable, map[string]string{"listener_id": r.FormValue("listener_id"), "status": CONSTANT.ListenerActive}) {
+		UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.ListenerNotExistMessage, CONSTANT.ShowDialog, response)
 		return
 	}
 
 	// generate new access token
-	accessToken, ok := UTIL.CreateAccessToken(r.FormValue("client_id"))
+	accessToken, ok := UTIL.CreateAccessToken(r.FormValue("listener_id"))
 	if !ok {
 		UTIL.SetReponse(w, CONSTANT.StatusCodeSessionExpired, CONSTANT.SessionExpiredMessage, CONSTANT.ShowDialog, response)
 		return
