@@ -2,22 +2,28 @@ package constant
 
 // database tables
 const (
-	AppointmentsTable        = "appointments"
-	AppointmentSlotsTable    = "appointment_slots"
-	ClientsTable             = "clients"
-	CouponsTable             = "coupons"
-	CounsellorsTable         = "counsellors"
-	CounsellorLanguagesTable = "counsellor_languages"
-	CounsellorTopicsTable    = "counsellor_topics"
-	InvoicesTable            = "invoices"
-	EventsTable              = "events"
-	LanguagesTable           = "languages"
-	ListenersTable           = "listeners"
-	OrdersTable              = "orders"
-	PhoneOTPVerifiedTable    = "phone_otp_verified"
-	SchedulesTable           = "schedules"
-	SlotsTable               = "slots"
-	TopicsTable              = "topics"
+	AppointmentsTable           = "appointments"
+	AppointmentSlotsTable       = "appointment_slots"
+	ClientsTable                = "clients"
+	ContentsTable               = "contents"
+	ContentCategoriesTable      = "content_categories"
+	ContentLikesTable           = "content_likes"
+	CouponsTable                = "coupons"
+	CounsellorsTable            = "counsellors"
+	CounsellorLanguagesTable    = "counsellor_languages"
+	CounsellorTopicsTable       = "counsellor_topics"
+	InvoicesTable               = "invoices"
+	LanguagesTable              = "languages"
+	ListenersTable              = "listeners"
+	OrderClientAppointmentTable = "order_client_appointments"
+	OrderClientEventTable       = "order_client_events"
+	OrderCounsellorEventTable   = "order_counsellor_events"
+	PhoneOTPVerifiedTable       = "phone_otp_verified"
+	RefundsTable                = "refunds"
+	SchedulesTable              = "schedules"
+	SlotsTable                  = "slots"
+	TherapistsTable             = "therapists"
+	TopicsTable                 = "topics"
 )
 
 // NumberOfTimesUniqueInserts - number of times insert statement should get executed for unqiue id
@@ -31,9 +37,12 @@ const (
 	AppointmentDigits     = 12
 	AppointmentSlotDigits = 11
 	ClientDigits          = 13
+	ContentDigits         = 10
 	CounsellorDigits      = 6
 	ListenerDigits        = 9
 	EventDigits           = 7
 	InvoiceDigits         = 8
 	OrderDigits           = 10
+	RefundDigits          = 9
+	TherapistDigits       = 5
 )

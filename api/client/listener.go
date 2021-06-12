@@ -23,7 +23,7 @@ func ListenerProfile(w http.ResponseWriter, r *http.Request) {
 	var response = make(map[string]interface{})
 
 	// get listener details
-	listener, status, ok := DB.SelectSQL(CONSTANT.ListenersTable, []string{"first_name", "last_name", "total_rating", "average_rating", "photo"}, map[string]string{"listener_id": r.FormValue("listener_id")})
+	listener, status, ok := DB.SelectSQL(CONSTANT.ListenersTable, []string{"first_name", "last_name", "total_rating", "average_rating", "photo", "slot_type"}, map[string]string{"listener_id": r.FormValue("listener_id")})
 	if !ok {
 		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
 		return
@@ -54,10 +54,18 @@ func ListenerProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// get counsellor latest content
+	contents, status, ok := DB.SelectProcess("select * from "+CONSTANT.ContentsTable+" where counsellor_id = ? and training = 0 and status = 1 order by created_at desc limit 20", r.FormValue("listener_id"))
+	if !ok {
+		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
+		return
+	}
+
 	response["listener"] = listener[0]
 	response["languages"] = languages
 	response["topics"] = topics
 	response["reviews"] = reviews
+	response["contents"] = contents
 	response["media_url"] = CONFIG.MediaURL
 	UTIL.SetReponse(w, CONSTANT.StatusCodeOk, "", CONSTANT.ShowDialog, response)
 }
@@ -81,7 +89,8 @@ func ListenerSlots(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response["slots"] = slots
+	// remove times and dates with no availability
+	response["slots"] = UTIL.FilterAvailableSlots(slots)
 	UTIL.SetReponse(w, CONSTANT.StatusCodeOk, "", CONSTANT.ShowDialog, response)
 }
 
@@ -113,7 +122,7 @@ func ListenerOrderCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get client details
-	client, status, ok := DB.SelectSQL(CONSTANT.ClientsTable, []string{"status"}, map[string]string{"client_id": body["client_id"]})
+	client, status, ok := DB.SelectSQL(CONSTANT.ClientsTable, []string{"*"}, map[string]string{"client_id": body["client_id"]})
 	if !ok {
 		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
 		return
@@ -130,7 +139,7 @@ func ListenerOrderCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get listener details
-	listener, status, ok := DB.SelectSQL(CONSTANT.ListenersTable, []string{"status"}, map[string]string{"listener_id": body["listener_id"]})
+	listener, status, ok := DB.SelectSQL(CONSTANT.ListenersTable, []string{"*"}, map[string]string{"listener_id": body["listener_id"]})
 	if !ok {
 		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
 		return
@@ -159,12 +168,11 @@ func ListenerOrderCreate(w http.ResponseWriter, r *http.Request) {
 	order["date"] = body["date"]
 	order["time"] = body["time"]
 	order["type"] = CONSTANT.ListenerType
-	order["order_type"] = CONSTANT.OrderAppointmentType
 	order["status"] = CONSTANT.OrderWaiting
 	order["created_at"] = UTIL.GetCurrentTime().String()
 	// no paid amount and billing
 
-	orderID, status, ok := DB.InsertWithUniqueID(CONSTANT.OrdersTable, CONSTANT.OrderDigits, order, "order_id")
+	orderID, status, ok := DB.InsertWithUniqueID(CONSTANT.OrderClientAppointmentTable, CONSTANT.OrderDigits, order, "order_id")
 	if !ok {
 		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
 		return
@@ -201,7 +209,7 @@ func ListenerOrderPaymentComplete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get order details
-	order, status, ok := DB.SelectSQL(CONSTANT.OrdersTable, []string{"*"}, map[string]string{"order_id": body["order_id"]})
+	order, status, ok := DB.SelectSQL(CONSTANT.OrderClientAppointmentTable, []string{"*"}, map[string]string{"order_id": body["order_id"]})
 	if !ok {
 		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
 		return
@@ -213,11 +221,6 @@ func ListenerOrderPaymentComplete(w http.ResponseWriter, r *http.Request) {
 	}
 	// check if order is with listener
 	if !strings.EqualFold(order[0]["type"], CONSTANT.ListenerType) {
-		UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, "", CONSTANT.ShowDialog, response)
-		return
-	}
-	// check if order is appointment
-	if !strings.EqualFold(order[0]["order_type"], CONSTANT.OrderAppointmentType) {
 		UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, "", CONSTANT.ShowDialog, response)
 		return
 	}
@@ -246,7 +249,7 @@ func ListenerOrderPaymentComplete(w http.ResponseWriter, r *http.Request) {
 	orderUpdate := map[string]string{}
 	orderUpdate["status"] = CONSTANT.OrderInProgress
 	orderUpdate["modified_at"] = UTIL.GetCurrentTime().String()
-	status, ok = DB.UpdateSQL(CONSTANT.OrdersTable,
+	status, ok = DB.UpdateSQL(CONSTANT.OrderClientAppointmentTable,
 		map[string]string{
 			"order_id": body["order_id"],
 		},

@@ -23,6 +23,24 @@ func LoadClientRoutes(router *mux.Router) {
 	clientRoutes.HandleFunc("/appointment", AppointmentReschedule).Queries(
 		"appointment_id", "{appointment_id}",
 	).Methods("PUT")
+	clientRoutes.HandleFunc("/appointment", AppointmentCancel).Queries(
+		"appointment_id", "{appointment_id}",
+	).Methods("DELETE")
+	clientRoutes.HandleFunc("/appointment/rate", AppointmentRatingAdd).Methods("POST")
+
+	// content
+	clientRoutes.HandleFunc("/content", Content).Methods("GET")
+	clientRoutes.HandleFunc("/content/like", ContentLikeGet).Queries(
+		"client_id", "{client_id}",
+	).Methods("GET")
+	clientRoutes.HandleFunc("/content/like", ContentLikeAdd).Queries(
+		"client_id", "{client_id}",
+		"content_id", "{content_id}",
+	).Methods("POST")
+	clientRoutes.HandleFunc("/content/like", ContentLikeDelete).Queries(
+		"client_id", "{client_id}",
+		"content_id", "{content_id}",
+	).Methods("DELETE")
 
 	// counsellor
 	clientRoutes.HandleFunc("/counsellor", CounsellorProfile).Queries(
@@ -37,13 +55,16 @@ func LoadClientRoutes(router *mux.Router) {
 	// event
 	clientRoutes.HandleFunc("/events", EventsList).Methods("GET")
 	clientRoutes.HandleFunc("/event", EventDetail).Queries(
-		"event_id", "{event_id}",
+		"order_id", "{order_id}",
 	).Methods("GET")
 	clientRoutes.HandleFunc("/event/booked", EventsBooked).Queries(
 		"client_id", "{client_id}",
 	).Methods("GET")
 	clientRoutes.HandleFunc("/event/order", EventOrderCreate).Methods("POST")
 	clientRoutes.HandleFunc("/event/paymentcomplete", EventOrderPaymentComplete).Methods("POST")
+
+	// home
+	clientRoutes.HandleFunc("/home", Home).Methods("GET")
 
 	// login
 	clientRoutes.HandleFunc("/sendotp", SendOTP).Queries(
@@ -53,7 +74,7 @@ func LoadClientRoutes(router *mux.Router) {
 		"phone", "{phone}",
 		"otp", "{otp}",
 	).Methods("GET")
-	router.Path("/refresh-token").Queries(
+	clientRoutes.Path("/refresh-token").Queries(
 		"client_id", "{client_id}",
 	).HandlerFunc(RefreshToken).Methods("GET")
 
@@ -82,5 +103,14 @@ func LoadClientRoutes(router *mux.Router) {
 	// search
 	clientRoutes.HandleFunc("/search", ListSearch).Methods("GET")
 
-	clientRoutes.HandleFunc("/testpayu", TestPAYU).Methods("POST")
+	// therapist
+	clientRoutes.HandleFunc("/therapist", TherapistProfile).Queries(
+		"therapist_id", "{therapist_id}",
+	).Methods("GET")
+	clientRoutes.HandleFunc("/therapist/slots", TherapistSlots).Queries(
+		"therapist_id", "{therapist_id}",
+	).Methods("GET")
+	clientRoutes.HandleFunc("/therapist/order", TherapistOrderCreate).Methods("POST")
+	clientRoutes.HandleFunc("/therapist/paymentcomplete", TherapistOrderPaymentComplete).Methods("POST")
+
 }

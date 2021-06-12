@@ -88,6 +88,18 @@ func ProfileAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// check if user already signed up with specified phone
+	if DB.CheckIfExists(CONSTANT.ClientsTable, map[string]string{"phone": body["phone"]}) {
+		UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.PhoneExistsMessage, CONSTANT.ShowDialog, response)
+		return
+	}
+
+	// check if user already signed up with specified email
+	if DB.CheckIfExists(CONSTANT.ClientsTable, map[string]string{"email": body["email"]}) {
+		UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.EmailExistsMessage, CONSTANT.ShowDialog, response)
+		return
+	}
+
 	// check if phone is verfied by OTP
 	if !DB.CheckIfExists(CONSTANT.PhoneOTPVerifiedTable, map[string]string{"phone": body["phone"]}) {
 		UTIL.SetReponse(w, CONSTANT.StatusCodeBadRequest, CONSTANT.VerifyPhoneRequiredMessage, CONSTANT.ShowDialog, response)
@@ -105,6 +117,7 @@ func ProfileAdd(w http.ResponseWriter, r *http.Request) {
 	listener["occupation"] = body["occupation"]
 	listener["experience"] = body["experience"]
 	listener["about"] = body["about"]
+	listener["device_id"] = body["device_id"]
 	listener["status"] = CONSTANT.ListenerNotApproved
 	listener["created_at"] = UTIL.GetCurrentTime().String()
 	listenerID, status, ok := DB.InsertWithUniqueID(CONSTANT.ListenersTable, CONSTANT.ListenerDigits, listener, "listener_id")
@@ -173,8 +186,10 @@ func ProfileUpdate(w http.ResponseWriter, r *http.Request) {
 	if len(body["about"]) > 0 {
 		listener["about"] = body["about"]
 	}
-
-	listener["updated_at"] = UTIL.GetCurrentTime().String()
+	if len(body["device_id"]) > 0 {
+		listener["device_id"] = body["device_id"]
+	}
+	listener["modified_at"] = UTIL.GetCurrentTime().String()
 	status, ok := DB.UpdateSQL(CONSTANT.ListenersTable, map[string]string{"listener_id": r.FormValue("listener_id")}, listener)
 	if !ok {
 		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)

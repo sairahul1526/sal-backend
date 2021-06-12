@@ -33,7 +33,15 @@ func ListMeta(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// get content categories
+	contentCategories, status, ok := DB.SelectSQL(CONSTANT.ContentCategoriesTable, []string{"*"}, map[string]string{})
+	if !ok {
+		UTIL.SetReponse(w, status, "", CONSTANT.ShowDialog, response)
+		return
+	}
+
 	response["topics"] = topics
 	response["languages"] = languages
+	response["content_categories"] = contentCategories
 	UTIL.SetReponse(w, CONSTANT.StatusCodeOk, "", CONSTANT.ShowDialog, response)
 }

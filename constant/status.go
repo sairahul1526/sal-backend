@@ -18,6 +18,13 @@ const (
 	ShowToast  = "2"
 )
 
+// content types
+const (
+	VideoContentType   = "1"
+	AudioContentType   = "2"
+	ArticleContentType = "3"
+)
+
 // appointment or event order
 const (
 	OrderAppointmentType = "1"
@@ -29,6 +36,7 @@ const (
 	CounsellorType = "1"
 	ListenerType   = "2"
 	ClientType     = "3"
+	TherapistType  = "4"
 )
 
 // counsellor status
@@ -54,10 +62,19 @@ const (
 	ListenerBlocked     = "3"
 )
 
+// therapist status
+const (
+	TherapistNotApproved = "0"
+	TherapistActive      = "1"
+	TherapistInactive    = "2"
+	TherapistBlocked     = "3"
+)
+
 // order status
 const (
 	OrderWaiting    = "0"
 	OrderInProgress = "1"
+	OrderCompleted  = "2"
 )
 
 // appointment status
@@ -65,6 +82,7 @@ const (
 	AppointmentToBeStarted = "1"
 	AppointmentStarted     = "2"
 	AppointmentCompleted   = "3"
+	AppointmentCancelled   = "4"
 )
 
 // appointment slots status

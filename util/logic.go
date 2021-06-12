@@ -29,9 +29,9 @@ func GetBillingDetails(price, discount string) map[string]string {
 	return billing
 }
 
-// CheckIfAppointmentSlotAvailable - for both counsellor and listener, check if the specfied slot is available - date (2021-01-12), time (0-23 slots in IST)
+// CheckIfAppointmentSlotAvailable - for both counsellor and listener, check if the specfied slot is available - date (2021-01-12), time (0-47 slots in IST)
 func CheckIfAppointmentSlotAvailable(counsellorID, date, time string) bool {
-	data, _, _ := DB.SelectSQL(CONSTANT.SlotsTable, []string{date}, map[string]string{"counsellor_id": counsellorID, "date": date, time: "1"}) // if the date time data is 1 in database
+	data, _, _ := DB.SelectSQL(CONSTANT.SlotsTable, []string{"1"}, map[string]string{"counsellor_id": counsellorID, "date": date, time: "1"}) // if the date time data is 1 in database
 	return len(data) > 0
 }
 
@@ -52,4 +52,31 @@ func AssociateLanguagesAndTopics(topicIDs, languageIDs, id string) {
 			DB.InsertSQL(CONSTANT.CounsellorLanguagesTable, map[string]string{"counsellor_id": id, "language_id": languageID})
 		}
 	}
+}
+
+// FilterAvailableSlots - show only available slots and dates
+func FilterAvailableSlots(slots []map[string]string) []map[string]string {
+	// remove dates with no availability
+	filteredSlots := []map[string]string{}
+	for _, slot := range slots {
+		filteredSlot := map[string]string{}
+		startSlot := 0
+		if strings.EqualFold(GetCurrentTime().Format("2006-01-02"), slot["date"]) {
+			// use from next hour and multiply by 2 to get 30 min slots
+			startSlot = (GetCurrentTime().Hour() + 1) * 2 // use next slot for removing expired time for today
+		}
+
+		for i := startSlot; i < 48; i++ { // 48 - 30 min slots
+			// show only times with availability
+			if strings.EqualFold(slot[strconv.Itoa(i)], "1") {
+				filteredSlot[strconv.Itoa(i)] = "1"
+			}
+		}
+		if len(filteredSlot) > 0 { // atleast 1 slot is available
+			filteredSlot["date"] = slot["date"]
+			filteredSlots = append(filteredSlots, filteredSlot)
+		}
+	}
+
+	return filteredSlots
 }
